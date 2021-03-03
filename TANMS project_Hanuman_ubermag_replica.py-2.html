@@ -41,10 +41,10 @@ system.dynamics = mm.Precession(gamma0=gamma0) + mm.Damping(alpha=alpha)
 
 Lx = 50e-9  # cubic sample edge length in x-direction(m)
 Ly = 30e-9  # cubic sample edge length in y-direction(m)
-Lz = 0  # determine this from Hanuman's code. 
+Lz = 6e-9  # this is the total height, 5nm from heavy metal and 1 nm from ferrimagnet. Unsure if we need to define these regions separately.   
 
 region = df.Region(p1=(0, 0, 0), p2=(Lx, Ly, Lz))
-mesh = df.Mesh(region=region, n=(10, 10, 0))
+mesh = df.Mesh(region=region, n=(1, 1, 1))
 
 Ms = 1e6  # saturation magnetisation (A/m)
 system.m = df.Field(mesh, dim=3, value=(0.086824, 0.0075961, 0.99619), norm=Ms)
