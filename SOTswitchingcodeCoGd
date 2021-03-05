@@ -1,0 +1,158 @@
+clear all
+global m;
+global Hext H_exch H_d H_pma H_elastic;
+global alpha gamma alphagamma qNs qNsgamma0 cur_dc ;
+global delta_t p_FM p_Pt D Is_MTJ_on Isot_HM_on;
+
+start_time=clock;
+output_directory='D:\Hanuman_UCBerkeley\UC Berkeley_Posdoc\SOT_simulation\'; 
+gamma0=2.21e5;  %in MKSA units free electron value
+alpha=0.01;hbar=1.0545e-34; % unit in J.s
+gamma=gamma0/(1+alpha*alpha); alphagamma=alpha*gamma;
+Ms=1000*1e3;  %Ms in A/m; Ms/1000= Ms in emu/cc
+Lx=50e-9; Ly=30e-9; t_FM=1e-9; 
+q=1.6e-19; kB=1.38e-23; mu0=4*pi*1e-7;  T=0*300; muB=9.27e-24; %SI units
+mag_moment=(Ms)*(Lx*Ly*t_FM); 
+D=alpha*(kB*T)/(mu0*mag_moment*gamma); 
+Ns=mag_moment/muB; qNs=q*Ns; qNsgamma0=qNs*gamma0;
+Ki=1.3*1e-7;Kpma=-Ki/t_FM;Hpma=-(2/(mu0*Ms))*Kpma;
+
+Is_MTJ_on=0; %0=offl 1=on
+Isot_HM_on=1; %0=offl 1=on
+Theta_sh=1;W_HM=3e-6;t_HM=5e-9;Area_HM=W_HM*t_HM;
+H_exch=0*(250/pi); H_d=100*(250/pi); H_pma=Hpma*(250/pi); H_elastic=150*[1 0 0]*(250/pi);
+%H_per=1e4*(250/pi); % in A/m  %H_per=4*pi*Ms;  % in Oe
+%H_para=100*(250/pi); H_per=1e4*(250/pi); % in A/m  %H_per=4*pi*Ms;  % in Oe
+
+I_sot_val=[200]*1e-3;
+
+Hx_val=[-200];theta_ex=90;phi_ex=90;
+
+for I_sot_ind=1:length(I_sot_val)
+I_sot=I_sot_val(I_sot_ind);  % I in amp.  %+ve current amplification
+J_sot=I_sot/Area_HM;
+
+torque_strength_ratio=1;
+DLT_constant=(J_sot*Theta_sh*hbar)/(2*q*t_FM*mu0*Ms);
+FL_constant=torque_strength_ratio*DLT_constant;
+
+
+for Hx_ind=1:length(Hx_val)
+H_x=Hx_val(Hx_ind);
+Hext=H_x*[cosd(theta_ex)*sind(phi_ex),sind(theta_ex)*sind(phi_ex),cosd(phi_ex)]'*(250/pi);  % Hext in A/m ; quantity in [  ]=field in Oe
+
+delta_t=3e-12; 
+simulation_time=50e-9; 
+simulation_points=round(simulation_time/delta_t);
+save_after_time=5*delta_t; 
+save_after=round(save_after_time/delta_t);
+print_after_time=simulation_time/20; 
+print_after=round(print_after_time/delta_t);
+
+initial_angle_theta=5*pi/180;
+initial_angle_phi=5*pi/180; 
+m=[cos(initial_angle_theta)*sin(initial_angle_phi),sin(initial_angle_theta)*sin(initial_angle_phi),cos(initial_angle_phi)]'; 
+m=m/norm(m);
+
+disp(['initial mx my mz = ', num2str(m(1)),' ',num2str(m(2)),' ',num2str(m(3))]);
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+% omega0=gamma*sqrt((-H_para+Hext(2))*(-H_para+Hext(2)+H_per)); f0=omega0/(2*pi);
+% I_critical=-alpha*omega0/(f_factor*gamma)
+% J_critical=I_critical/(Lx*Ly);
+% I_ac_max=cur_dc*DR*0.5/(R0+RT);
+
+%return
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%file_name1=(['_uA_',num2str(cur_dc*1e6),'_Isot_HM',num2str(Isot_HM_on),'_H_para',num2str(H_para*pi/250),'_Hext',num2str(Hext(1)*pi/250),'_simulation_time_us_',num2str(simulation_time*1e6),'_T',num2str(T),'R86.dat']);
+file_name1=(['_uA_',num2str(I_sot*1e6),'_Isot_HM',num2str(Isot_HM_on),'_Hext',num2str(Hext(1)*pi/250),'_simulation_time_us_',num2str(simulation_time*1e6),'_T',num2str(T),'R86.dat']);
+
+file_name1=([output_directory,file_name1]);
+%file_name1='c:\ashwin\b1.dat';
+
+index=1;
+time=0; %ene0=-Hext(1)-H_para/2;%for ene0 put m(1)=1; m(2)=m(3)=0;
+write_data=[time,m']; 
+dlmwrite(file_name1,write_data,'precision',11);
+for j1=1:round(simulation_points/(print_after))
+    j1
+    %for j2=1:round(simulation_points/(save_after*print_after))
+        for j2=1:round(print_after/(save_after))
+%     ctheta=dot(m,m_pin);
+%     ene=-dot(Hext,m)+0.5*(-H_para*m(1)*m(1)+H_per*m(3)*m(3));   %ene=ene*mu0*Ms*vol
+%     ene=ene-ene0;
+    index=index+1;
+    %write_data(index,1)=t;write_data(index,2:4)=m1;write_data(index,3:5)=m2;
+    for j3=1:save_after  
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+Hx=Hext(1)+(H_exch + H_elastic(1))*m(1); Hy=Hext(2)+(H_exch+ H_elastic(2))*m(2); Hz=Hext(3)+(H_exch +H_d +H_pma+ H_elastic(3))*m(3);
+%Hx=Hext(1)+ H_elastic*m(1); Hy=Hext(2)+H_para*m(2); Hz=Hext(3)-H_per*m(3);
+H_random=sqrt(2*D/delta_t)*randn(3,1); 
+H=[Hx,Hy,Hz]'+H_random;
+sigma_polarization=[0 1 0]';
+SOT_field=cross(m,(sigma_polarization));
+damping_torque=gamma*mu0*DLT_constant*cross(m,SOT_field);
+field_torque=gamma*mu0*FL_constant*SOT_field;
+SOT=-damping_torque+field_torque;
+precession=cross(m,H); 
+damping=cross(m,precession); 
+A=-gamma*precession-alphagamma*damping +SOT;
+mbar=m + delta_t*A; Aold=A;mold=m; m=mbar; m=m/(norm(m));
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+Hx=Hext(1)+(H_exch + H_elastic(1))*m(1); Hy=Hext(2)+(H_exch+ H_elastic(2))*m(2); Hz=Hext(3)+(H_exch +H_d +H_pma+ H_elastic(3))*m(3);
+%Hx=Hext(1); Hy=Hext(2)+H_para*m(2)+ H_elastic*m(2); Hz=Hext(3)-H_per*m(3);
+H_random=sqrt(2*D/delta_t)*randn(3,1); 
+H=[Hx,Hy,Hz]'+H_random;
+sigma_polarization=[0 1 0]';
+SOT_field=cross(m,(sigma_polarization));
+damping_torque=gamma*mu0*DLT_constant*cross(m,SOT_field);
+field_torque=gamma*mu0*FL_constant*SOT_field;
+SOT=-damping_torque+field_torque;
+precession=cross(m,H); 
+damping=cross(m,precession); 
+A=-gamma*precession-alphagamma*damping +SOT;
+m=mold+ 0.5*(Aold+A)*delta_t; m=m/(norm(m));
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+        time=time+delta_t*1e9;  % t in ns
+end
+    
+    write_data=[time, m'];
+    dlmwrite(file_name1,write_data,'precision',11,'-append');  
+    end
+end
+end
+end
+%dlmwrite(file_name1,write_data);
+disp(['time taken by llg_sto= ' num2str(etime(clock,start_time)/60) ' min']);  %time in min
+
+
+%% plotting
+ data = dlmread(file_name1);
+  plot_t=data(1:end,1);
+ plot_mx=data(1:end,2); plot_my=data(1:end,3); plot_mz=data(1:end,4);
+ %plot(plot_t,plot_my,'g'); title('my'); %hold on; return
+ 
+subplot(2,2,1)
+plot(plot_t,plot_mx)
+title('Mx')
+axis([-1 time -1.5 1.5])
+subplot(2,2,2)
+plot(plot_t,plot_my)
+title('My')
+axis([-1 time -1.5 1.5])
+subplot(2,2,3)
+plot(plot_t,plot_mz)
+title('Mz')
+axis([-1 time -1.5 1.5])
+hold on; 
+subplot (2,2,4)
+N=20;
+[plot_mx,plot_my,plot_mz]=sphere(N);
+axvct = linspace(-1,1,N)';
+axline = [zeros(N) zeros(N), axvct];
+figure(1)
+Sh = surf(plot_mx,plot_my,plot_mz);                                                     % Plot Sphere
+hold on
