@@ -7,9 +7,9 @@ global delta_t p_FM p_Pt D Is_MTJ_on Isot_HM_on;
 start_time=clock;
 output_directory='D:\Hanuman_UCBerkeley\UC Berkeley_Posdoc\SOT_simulation\'; 
 gamma0=2.21e5;  %in MKSA units free electron value
-alpha=0.01;hbar=1.0545e-34; % unit in J.s
+alpha=0.1;hbar=1.0545e-34; % unit in J.s
 gamma=gamma0/(1+alpha*alpha); alphagamma=alpha*gamma;
-Ms=1000*1e3;  %Ms in A/m; Ms/1000= Ms in emu/cc
+Ms=1900*1e3;  %Ms in A/m; Ms/1000= Ms in emu/cc
 Lx=50e-9; Ly=30e-9; t_FM=1e-9; 
 q=1.6e-19; kB=1.38e-23; mu0=4*pi*1e-7;  T=0*300; muB=9.27e-24; %SI units
 mag_moment=(Ms)*(Lx*Ly*t_FM); 
